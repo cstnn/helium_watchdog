@@ -1,3 +1,4 @@
+from functools import cache
 import bobcat
 import helium
 import _gmail
@@ -42,11 +43,13 @@ def ota_check(ip=secrets['cache_ip']):
         print(f"   {dt_string} OTA version currently read is {ota_current}")
         
     if ota['status_code'] == 200:
-        if int(ota_current) > cache_ota_last:
+        db_actions.insert_ota(ota_current)
+        if int(ota_current) > cache_ota_last and cache_ota_last != 0: # v1.1 fix to avoid reboot when starting the script for the 1st time as the new OTA will always be higher than 0
             if dry_run == 'False':
-                bobcat.bobcat_reboot(ip)
                 if verbose == 'True':
                     print(f"   {dt_string} OTA version increased (v{ota_current}) >>>>> REBOOTING <<<<<")
+                bobcat.bobcat_reboot(ip)
+                time.sleep(30)
             else:
                 if verbose == 'True':
                     print(f"   {dt_string} OTA version increased (v{ota_current}) >>>>> DRY -- REBOOTING <<<<<")
@@ -54,7 +57,7 @@ def ota_check(ip=secrets['cache_ip']):
                 _gmail.send_email("OTA version increased", f"""{dt_string}\n{cache_name}\nOTA version increased (v{ota_current}) \n>>>>> REBOOTING <<<<<""", email_to)
                 if verbose == 'True':
                     print(f"   {dt_string} Sending email ...")
-            db_actions.insert_ota(ota_current)
+            
     else:
         if verbose == 'True':
             print(f"   {dt_string} Bobcat hotspot (ota) API not responding")
@@ -72,7 +75,7 @@ def stale_check(address = secrets['cache_address'], ip=secrets['cache_ip']):
     rewards_value = rewards['hnt_rewards_total']
     if rewards['status_code'] == 200:
         # print(activity_count)
-        if float(rewards_value) > float(cache_last_rewards):
+        if float(rewards_value) > float(cache_last_rewards) and float(cache_last_rewards) != 0: # v1.1 fix to avoid reboot when starting the script for the 1st time as the new rewards value will always be higher than 0
             # Do nothing   
             db_actions.insert_rewards(rewards_value)
             if verbose == 'True':
@@ -80,9 +83,10 @@ def stale_check(address = secrets['cache_address'], ip=secrets['cache_ip']):
             
         else:
             if dry_run == 'False':
-                bobcat.bobcat_reboot(ip)
                 if verbose == 'True':
                     print(f"   {dt_string} Hotspot is STALE (0 additional rewards since last check) >>>>> REBOOTING <<<<<")
+                bobcat.bobcat_reboot(ip)
+                time.sleep(30)
             else:
                 if verbose == 'True':
                     print(f"   {dt_string} Hotspot is STALE (0 additional rewards since last check) >>>>> DRY -- REBOOTING <<<<<")
@@ -130,9 +134,10 @@ def sync_check(ip=secrets['cache_ip']):
                     print(f"   {dt_string} Sending email ...")
         elif block_gap > 400:
             if dry_run == 'False':
-                bobcat.bobcat_fast_sync(ip)
                 if verbose == 'True':
                     print(f"   {dt_string} Hotspot is OUT OF SYNC (gap = {block_gap}) >>>>> FAST SYNC <<<<<")
+                bbobcat.bobcat_fast_sync(ip)
+                time.sleep(30)
             else:
                 if verbose == 'True':
                     print(f"   {dt_string} Hotspot is OUT OF SYNC (gap = {block_gap}) >>>>> DRY -- FAST SYNC <<<<<")
