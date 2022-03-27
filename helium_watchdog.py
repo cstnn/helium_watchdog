@@ -1,3 +1,24 @@
+"""
+# If you just want to check:
+- OTA version change
+- Sync status
+- Rewards change
+
+# Configure your details and preferences in the "secrets.txt" file
+cache_name= your hotspot animal name like "alert_shadow_iguana"
+cache_address= your hotspot public blockchain address like "11q2UB9Cy9GsdHkHCn2K1F2LZLxDSfe9Xa4F3ir1NMfTZZ6bs7R"
+cache_ip= your internal local IP like "192.168.1.4"
+sleep= the number of seconds between checks like "7200"
+send_emails= flag it as "True" if you want to get emails when actions are taken / else "False"
+email_to= add your email address here 
+log= flag it as "True" if you want to write to a logfile when actions are taken / else "False"
+verbose= flag it as "True" if you want to see command line print outs when actions are taken / else "False"
+dry_run= use "True" if you want to just test the script by printing out what actions are taken without actually taking them / else "False"
+
+"""
+
+
+
 from functools import cache
 import bobcat
 import helium
