@@ -10,6 +10,9 @@ cache_address= your hotspot public blockchain address like "11q2UB9Cy9GsdHkHCn2K
 cache_ip= your internal local IP like "192.168.1.4"
 sleep= the number of seconds between checks like "7200"
 send_emails= flag it as "True" if you want to get emails when actions are taken / else "False"
+send_telegram_msg= flag it as "True" if you want to get messages when actions are taken / else "False"
+tg_token= api key of the telegram bot
+msg_to= your telegram user id, find out yours with @userinfobot
 email_to= add your email address here 
 log= flag it as "True" if you want to write to a logfile when actions are taken / else "False"
 verbose= flag it as "True" if you want to see command line print outs when actions are taken / else "False"
@@ -31,17 +34,24 @@ from datetime import datetime
 from sqlalchemy import create_engine, table, column
 import db_actions
 import secrets
+import telebot
 
 secrets = db_actions.secrets()
 
 verbose = secrets['verbose']
 send_emails = secrets['send_emails']
+send_tg_msg = secrets['send_telegram_msg']
+tg_token = secrets['tg_token']
 dry_run = secrets['dry_run']
 cache_name = secrets['cache_name']
 log = secrets['log']
 email_to = secrets['email_to']
+msg_to = secrets['msg_to']
 sleep = int(secrets['sleep'])
 # print(verbose)
+
+if send_tg_msg == 'True':
+    tb = telebot.TeleBot(tg_token)
 
 def initialize():
     ota_current = int(bobcat.bobcat_ota(secrets['cache_ip'])['ota_version_min'])
@@ -78,6 +88,11 @@ def ota_check(ip=secrets['cache_ip']):
                 _gmail.send_email("OTA version increased", f"""{dt_string}\n{cache_name}\nOTA version increased (v{ota_current}) \n>>>>> REBOOTING <<<<<""", email_to)
                 if verbose == 'True':
                     print(f"   {dt_string} Sending email ...")
+            if send_tg_msg == 'True':
+                tb.send_message(msg_to, f"""{dt_string}\n{cache_name}\nOTA version increased (v{ota_current}) \n>>>>> REBOOTING <<<<<""")
+                if verbose == 'True':
+                    print(f"   {dt_string} Sending Telegram message ...")
+
             
     else:
         if verbose == 'True':
@@ -116,6 +131,10 @@ def stale_check(address = secrets['cache_address'], ip=secrets['cache_ip']):
                 _gmail.send_email("Hotspot is STALE", f"""{dt_string}\n{cache_name}\nHotspot is STALE (0 additional rewards since last check) \n>>>>> REBOOTING <<<<<""", email_to)
                 if verbose == 'True':
                     print(f"   {dt_string} Sending email ...")
+            if send_tg_msg == 'True':
+                tb.send_message(msg_to, f"""{dt_string}\n{cache_name}\nHotspot is STALE (0 additional rewards since last check) \n>>>>> REBOOTING <<<<<""")
+                if verbose == 'True':
+                    print(f"   {dt_string} Sending Telegram message ...")
     else:
         if verbose == 'True':
             print(f"   {dt_string} Helium API not responding")
@@ -145,6 +164,10 @@ def sync_check(ip=secrets['cache_ip']):
                 _gmail.send_email("Blockchain is slow", f"""{dt_string}\n{cache_name}\nBlockchain is slow (gap = {block_gap}) \nNothing can be done...""", email_to)  
                 if verbose == 'True':
                     print(f"   {dt_string} Sending email ...")
+            if send_tg_msg == 'True':
+                tb.send_message(msg_to, f"""{dt_string}\n{cache_name}\nBlockchain is slow (gap = {block_gap}) \nNothing can be done...""")
+                if verbose == 'True':
+                    print(f"   {dt_string} Sending Telegram message ...")
         elif block_gap < 100 and block_gap > 30:
             if verbose == 'True': 
                 print(f"   {dt_string} Hotspot is slightly out of sync (gap = {block_gap}), nothing that can be done...")
@@ -153,6 +176,10 @@ def sync_check(ip=secrets['cache_ip']):
                 _gmail.send_email("Hotspot is OUT OF SYNC", f"""{dt_string}\n{cache_name}\nHotspot is slightly OUT OF SYNC (gap = {block_gap}) \nCan't yet use fast sync ... need to wait for 400 blocks gap.""", email_to)  
                 if verbose == 'True':
                     print(f"   {dt_string} Sending email ...")
+            if send_tg_msg == 'True':
+                tb.send_message(msg_to, f"""{dt_string}\n{cache_name}\nHotspot is slightly OUT OF SYNC (gap = {block_gap}) \nCan't yet use fast sync ... need to wait for 400 blocks gap.""")
+                if verbose == 'True':
+                    print(f"   {dt_string} Sending Telegram message ...")
         elif block_gap > 400:
             if dry_run == 'False':
                 if verbose == 'True':
@@ -167,7 +194,11 @@ def sync_check(ip=secrets['cache_ip']):
             if send_emails == 'True':
                 _gmail.send_email("Hotspot is OUT OF SYNC", f"""{dt_string}\n{cache_name}\nHotspot is OUT OF SYNC (gap = {block_gap}) \n>>>>> FAST SYNC <<<<<""", email_to)  
                 if verbose == 'True':
-                    print(f"   {dt_string} Sending email ...")      
+                    print(f"   {dt_string} Sending email ...")   
+            if send_tg_msg == 'True':
+                tb.send_message(msg_to, f"""{dt_string}\n{cache_name}\nHotspot is OUT OF SYNC (gap = {block_gap}) \n>>>>> FAST SYNC <<<<<""")
+                if verbose == 'True':
+                    print(f"   {dt_string} Sending Telegram message ...")
     else:
         if verbose == True:
             print(f"   {dt_string} Bobcat hotspot (sync) API not responding")
@@ -184,6 +215,11 @@ if send_emails == 'True':
     _gmail.send_email(f"ECHO watchdog started at {dt_string}", f"""Hi,\nI'm ECHO the watchdog for your BOBCAT 300 {secrets['cache_name']}.\nEvery {int(secrets['sleep'])/60/60} hours I will check the status.\nIf something important happens I will bark and send you an email.""", email_to)
     if verbose == 'True':
         print(f"   {dt_string} Sending email ...")
+
+if send_tg_msg == 'True':
+    tb.send_message(msg_to, f"""Hi,\nI'm ECHO the watchdog for your BOBCAT 300 {secrets['cache_name']}.\nEvery {int(secrets['sleep'])/60/60} hours I will check the status.\nIf something important happens I will bark and send you an email.""")
+    if verbose == 'True':
+        print(f"   {dt_string} Sending Telegram message ...")
 
 global iteration
 iteration = 0
