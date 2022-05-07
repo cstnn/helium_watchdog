@@ -38,6 +38,9 @@ sleep = int(secrets['sleep'])
 
 #################################################
 
+if send_tg_msg == 'True':
+    tb = telebot.TeleBot(tg_token)
+
 if log == 'True':
     LogFile.start()
 

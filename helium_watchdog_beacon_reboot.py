@@ -27,6 +27,9 @@ sleep = int(secrets['sleep'])
 
 cache_last_beacon = '1000000000'
 
+if send_tg_msg == 'True':
+    tb = telebot.TeleBot(tg_token)
+
 # Check for stale hotspot
 def beacon_check(address = secrets['cache_address'], ip=secrets['cache_ip']):
     now = datetime.now()

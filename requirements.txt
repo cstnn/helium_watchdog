@@ -2,3 +2,4 @@ configparser
 sqlalchemy
 datetime
 colored
+pyTelegramBotAPI
