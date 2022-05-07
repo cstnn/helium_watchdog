@@ -16,7 +16,10 @@
 - <code>cache_ip</code>= your internal local IP like "192.168.1.4"
 - <code>sleep</code>= the number of seconds between checks like "7200"
 - <code>send_emails</code>= flag it as "True" if you want to get emails when actions are taken / else "False"
+- <code>send_telegram_msg</code>= flag it as "True" if you want to get messages when actions are taken / else "False"
 - <code>email_to</code>= add your email address here 
+- <code>tg_token</code>= api key of the telegram bot
+- <code>msg_to</code>= your telegram user id, find out yours with @userinfobot
 - <code>log</code>= flag it as "True" if you want to write to a logfile when actions are taken / else "False"
 - <code>verbose</code>= flag it as "True" if you want to see command line print outs when actions are taken / else "False"
 - <code>dry_run</code>= use "True" if you want to just test the script by printing out what actions are taken without actually taking them / else "False"
